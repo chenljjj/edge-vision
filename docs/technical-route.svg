@@ -1,76 +1,123 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="690" viewBox="0 0 1280 690" role="img" aria-labelledby="title desc">
-  <title id="title">Edge Vision 技术路线</title>
-  <desc id="desc">从 YOLO 模型准备、摄像头采集到 ONNX Runtime 推理和区域统计输出的边缘视觉部署流程。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="880" viewBox="0 0 1280 880" role="img" aria-labelledby="title desc">
+  <title id="title">Edge Vision 实际程序执行流程</title>
+  <desc id="desc">src.main 启动时初始化模型和相机，然后在逐帧循环中执行预处理、ONNX Runtime 推理、NMS、区域统计和 OpenCV 显示。</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L10,5 L0,10 z" fill="#476072"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="#466174"/>
     </marker>
     <style>
       .title { font: 700 28px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172a3a; }
-      .section { font: 700 16px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #476072; }
-      .label { font: 600 17px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172a3a; }
-      .detail { font: 400 14px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #526676; }
-      .note { font: 400 15px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #476072; }
-      .card { stroke-width: 2; }
-      .flow { fill: none; stroke: #476072; stroke-width: 2.5; marker-end: url(#arrow); }
-      .dash { fill: none; stroke: #8a9ba8; stroke-width: 2; stroke-dasharray: 8 7; marker-end: url(#arrow); }
+      .subtitle { font: 400 15px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #587080; }
+      .lane { font: 700 16px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #466174; }
+      .label { font: 600 16px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172a3a; }
+      .small { font: 400 13px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #506776; }
+      .tiny { font: 400 12px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #506776; }
+      .arrow { fill: none; stroke: #466174; stroke-width: 2.2; marker-end: url(#arrow); }
+      .dashed { fill: none; stroke: #78909f; stroke-width: 2; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .card { stroke-width: 1.8; }
     </style>
   </defs>
 
-  <rect width="1280" height="690" fill="#ffffff"/>
-  <text x="56" y="58" class="title">Edge Vision 技术路线</text>
-  <text x="56" y="88" class="note">模型标准化 → 多源采集 → 端侧推理 → 检测结果与性能指标</text>
+  <rect width="1280" height="880" fill="#ffffff"/>
+  <text x="48" y="52" class="title">Edge Vision 实际程序执行流程</text>
+  <text x="48" y="80" class="subtitle">对应 src/main.py、src/camera.py 与 src/detector.py 的运行顺序</text>
 
-  <rect x="40" y="120" width="1200" height="150" rx="8" fill="#f4f8fa" stroke="#d9e3e8"/>
-  <text x="64" y="151" class="section">1 · 模型准备</text>
-  <rect x="82" y="174" width="260" height="66" rx="6" fill="#ffffff" stroke="#8cb5c7" class="card"/>
-  <text x="212" y="201" text-anchor="middle" class="label">YOLO 权重 / 官方 ONNX</text>
-  <text x="212" y="224" text-anchor="middle" class="detail">训练或下载模型</text>
-  <path d="M342 207 H450" class="flow"/>
-  <rect x="458" y="174" width="260" height="66" rx="6" fill="#e7f4f8" stroke="#5a9db2" class="card"/>
-  <text x="588" y="201" text-anchor="middle" class="label">yolo11n.onnx</text>
-  <text x="588" y="224" text-anchor="middle" class="detail">统一交换格式</text>
-  <path d="M718 207 H826" class="flow"/>
-  <rect x="834" y="174" width="320" height="66" rx="6" fill="#ffffff" stroke="#8cb5c7" class="card"/>
-  <text x="994" y="201" text-anchor="middle" class="label">运行端依赖隔离</text>
-  <text x="994" y="224" text-anchor="middle" class="detail">ONNX Runtime + OpenCV</text>
+  <!-- Startup lane -->
+  <rect x="36" y="110" width="1208" height="190" rx="8" fill="#f3f8fa" stroke="#d6e3e8"/>
+  <text x="60" y="141" class="lane">启动与初始化（仅执行一次）</text>
 
-  <rect x="40" y="300" width="1200" height="210" rx="8" fill="#f8f7f2" stroke="#e2dfd2"/>
-  <text x="64" y="331" class="section">2 · 端侧推理流水线</text>
-  <rect x="70" y="365" width="210" height="94" rx="6" fill="#ffffff" stroke="#c6b878" class="card"/>
-  <text x="175" y="398" text-anchor="middle" class="label">帧采集</text>
-  <text x="175" y="424" text-anchor="middle" class="detail">OpenCV / Picamera2</text>
-  <text x="175" y="445" text-anchor="middle" class="detail">USB / CSI / RTSP</text>
-  <path d="M280 412 H350" class="flow"/>
-  <rect x="358" y="365" width="210" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
-  <text x="463" y="398" text-anchor="middle" class="label">预处理</text>
-  <text x="463" y="424" text-anchor="middle" class="detail">Letterbox · RGB</text>
-  <text x="463" y="445" text-anchor="middle" class="detail">NCHW · 归一化</text>
-  <path d="M568 412 H638" class="flow"/>
-  <rect x="646" y="365" width="210" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
-  <text x="751" y="398" text-anchor="middle" class="label">ONNX Runtime</text>
-  <text x="751" y="424" text-anchor="middle" class="detail">CPU / 可替换执行后端</text>
-  <text x="751" y="445" text-anchor="middle" class="detail">模型前向推理</text>
-  <path d="M856 412 H926" class="flow"/>
-  <rect x="934" y="365" width="250" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
-  <text x="1059" y="398" text-anchor="middle" class="label">后处理</text>
-  <text x="1059" y="424" text-anchor="middle" class="detail">类别筛选 · 置信度</text>
-  <text x="1059" y="445" text-anchor="middle" class="detail">NMS · 坐标还原</text>
+  <rect x="72" y="170" width="190" height="72" rx="6" fill="#ffffff" stroke="#76aabb" class="card"/>
+  <text x="167" y="198" text-anchor="middle" class="label">python -m src.main</text>
+  <text x="167" y="220" text-anchor="middle" class="small">解析 CLI 参数</text>
+  <path d="M262 206 H318" class="arrow"/>
 
-  <path d="M751 459 V492" class="dash"/>
-  <text x="770" y="487" class="detail">模型输入尺寸 / 阈值可调</text>
+  <rect x="326" y="170" width="210" height="72" rx="6" fill="#ffffff" stroke="#76aabb" class="card"/>
+  <text x="431" y="198" text-anchor="middle" class="label">加载运行配置</text>
+  <text x="431" y="220" text-anchor="middle" class="small">模型路径 · 阈值 · 区域</text>
+  <path d="M536 206 H592" class="arrow"/>
 
-  <rect x="40" y="540" width="1200" height="110" rx="8" fill="#f3f8f4" stroke="#d7e5d9"/>
-  <text x="64" y="571" class="section">3 · 设备输出</text>
-  <rect x="90" y="589" width="250" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
-  <text x="215" y="616" text-anchor="middle" class="label">检测框与类别</text>
-  <path d="M340 610 H442" class="flow"/>
-  <rect x="450" y="589" width="250" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
-  <text x="575" y="616" text-anchor="middle" class="label">区域内目标数量</text>
-  <path d="M700 610 H802" class="flow"/>
-  <rect x="810" y="589" width="170" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
-  <text x="895" y="616" text-anchor="middle" class="label">FPS</text>
-  <path d="M980 610 H1082" class="flow"/>
-  <rect x="1090" y="589" width="110" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
-  <text x="1145" y="616" text-anchor="middle" class="label">GUI</text>
+  <rect x="600" y="170" width="250" height="72" rx="6" fill="#e8f4f7" stroke="#4f9bb0" class="card"/>
+  <text x="725" y="198" text-anchor="middle" class="label">YoloOnnxDetector</text>
+  <text x="725" y="220" text-anchor="middle" class="small">InferenceSession · 输入尺寸</text>
+
+  <path d="M850 206 H906" class="arrow"/>
+  <polygon points="950,171 994,206 950,241 906,206" fill="#fffdf4" stroke="#c3aa65" stroke-width="1.8"/>
+  <text x="950" y="202" text-anchor="middle" class="tiny">camera</text>
+  <text x="950" y="217" text-anchor="middle" class="tiny">backend?</text>
+
+  <path d="M994 190 H1040 V166 H1085" class="arrow"/>
+  <rect x="1093" y="139" width="112" height="54" rx="6" fill="#ffffff" stroke="#c3aa65" class="card"/>
+  <text x="1149" y="163" text-anchor="middle" class="label">OpenCV</text>
+  <text x="1149" y="181" text-anchor="middle" class="tiny">VideoCapture</text>
+
+  <path d="M994 222 H1040 V254 H1085" class="arrow"/>
+  <rect x="1093" y="227" width="112" height="54" rx="6" fill="#ffffff" stroke="#c3aa65" class="card"/>
+  <text x="1149" y="251" text-anchor="middle" class="label">Picamera2</text>
+  <text x="1149" y="269" text-anchor="middle" class="tiny">CSI / libcamera</text>
+
+  <!-- Loop lane -->
+  <rect x="36" y="330" width="1208" height="458" rx="8" fill="#fbfaf6" stroke="#e4dfcf"/>
+  <text x="60" y="361" class="lane">逐帧循环（while True）</text>
+  <path d="M1160 302 V346 H1188" class="dashed"/>
+  <text x="1010" y="321" class="tiny">统一为 FrameSource.read()</text>
+
+  <rect x="72" y="390" width="174" height="70" rx="6" fill="#ffffff" stroke="#c3aa65" class="card"/>
+  <text x="159" y="417" text-anchor="middle" class="label">读取帧</text>
+  <text x="159" y="438" text-anchor="middle" class="small">success, frame</text>
+  <path d="M246 425 H294" class="arrow"/>
+
+  <polygon points="338,389 382,425 338,461 294,425" fill="#fffdf4" stroke="#c3aa65" stroke-width="1.8"/>
+  <text x="338" y="421" text-anchor="middle" class="tiny">成功且</text>
+  <text x="338" y="436" text-anchor="middle" class="tiny">非空？</text>
+  <path d="M382 425 H424" class="arrow"/>
+  <text x="388" y="410" class="tiny">是</text>
+  <path d="M338 461 V744 H1098" class="dashed"/>
+  <text x="348" y="486" class="tiny">否</text>
+
+  <rect x="432" y="390" width="212" height="70" rx="6" fill="#fff7e8" stroke="#d89a37" class="card"/>
+  <text x="538" y="417" text-anchor="middle" class="label">detect(frame)</text>
+  <text x="538" y="438" text-anchor="middle" class="small">进入 detector.py</text>
+  <path d="M644 425 H692" class="arrow"/>
+
+  <rect x="700" y="390" width="220" height="70" rx="6" fill="#fff7e8" stroke="#d89a37" class="card"/>
+  <text x="810" y="417" text-anchor="middle" class="label">模型预处理</text>
+  <text x="810" y="438" text-anchor="middle" class="small">Letterbox · BGR→RGB · NCHW</text>
+  <path d="M920 425 H968" class="arrow"/>
+
+  <rect x="976" y="390" width="220" height="70" rx="6" fill="#fef4e9" stroke="#d47735" class="card"/>
+  <text x="1086" y="417" text-anchor="middle" class="label">ONNX Runtime</text>
+  <text x="1086" y="438" text-anchor="middle" class="small">float32 / 255 · session.run</text>
+
+  <path d="M1086 460 V506 H964" class="arrow"/>
+  <rect x="734" y="506" width="222" height="76" rx="6" fill="#fef4e9" stroke="#d47735" class="card"/>
+  <text x="845" y="535" text-anchor="middle" class="label">后处理</text>
+  <text x="845" y="557" text-anchor="middle" class="small">类别分数 · 置信度筛选 · NMS</text>
+  <text x="845" y="575" text-anchor="middle" class="tiny">坐标按 letterbox 比例还原</text>
+  <path d="M734 544 H686" class="arrow"/>
+
+  <rect x="448" y="506" width="230" height="76" rx="6" fill="#f5f9f2" stroke="#7eae84" class="card"/>
+  <text x="563" y="535" text-anchor="middle" class="label">业务过滤与统计</text>
+  <text x="563" y="557" text-anchor="middle" class="small">目标类别筛选 · 计算中心点</text>
+  <text x="563" y="575" text-anchor="middle" class="tiny">point_in_rectangle · in region</text>
+  <path d="M448 544 H400" class="arrow"/>
+
+  <rect x="126" y="506" width="266" height="76" rx="6" fill="#f5f9f2" stroke="#7eae84" class="card"/>
+  <text x="259" y="535" text-anchor="middle" class="label">可视化与性能</text>
+  <text x="259" y="557" text-anchor="middle" class="small">绘制检测框 · 区域框 · FPS</text>
+  <text x="259" y="575" text-anchor="middle" class="tiny">cv2.imshow("Edge Vision")</text>
+
+  <path d="M259 582 V632" class="arrow"/>
+  <polygon points="259,632 309,670 259,708 209,670" fill="#fffdf4" stroke="#c3aa65" stroke-width="1.8"/>
+  <text x="259" y="666" text-anchor="middle" class="tiny">q 或 Esc？</text>
+  <path d="M209 670 H128 V425 H72" class="dashed"/>
+  <text x="134" y="656" class="tiny">否，下一帧</text>
+  <path d="M309 670 H1151 V714" class="arrow"/>
+  <text x="1016" y="656" class="tiny">是</text>
+
+  <!-- Shutdown -->
+  <rect x="1098" y="714" width="106" height="58" rx="6" fill="#fff2f1" stroke="#cb796f" class="card"/>
+  <text x="1151" y="739" text-anchor="middle" class="label">退出清理</text>
+  <text x="1151" y="758" text-anchor="middle" class="tiny">release + destroy</text>
+
+  <text x="50" y="832" class="subtitle">运行端核心依赖：OpenCV、NumPy、ONNX Runtime；树莓派 CSI 额外通过 Picamera2 接入 libcamera。</text>
 </svg>
