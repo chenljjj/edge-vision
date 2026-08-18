@@ -8,7 +8,6 @@
 - OpenCV 摄像头、视频文件、RTSP 源，以及 Raspberry Pi CSI/Picamera2 采集后端；
 - `person`、`car`、`bus`、`truck`、`motorcycle` 目标筛选；
 - 指定矩形内的实时目标数量与滑动平均 FPS；
-- 无显示器模式下的定期状态日志与 `systemd` 服务模板；
 - 不依赖训练框架的运行端，便于迁移到 ARM 设备。
 
 > 当前区域统计是“区域内实时数量”，不是跨线累计计数。模型文件和虚拟环境不会提交到 Git 仓库。
@@ -55,7 +54,7 @@ python -m src.main --source 0 --region 120,80,520,420
 
 ### Raspberry Pi 5 + CSI 摄像头
 
-前置条件：64-bit Raspberry Pi OS、已正确连接 CSI 排线与摄像头模组。默认模式使用 `cv2.imshow`，首次调试可通过 HDMI 或 Raspberry Pi Connect 打开图形桌面。
+前置条件：64-bit Raspberry Pi OS Desktop、已正确连接 CSI 排线与摄像头模组。当前程序使用 `cv2.imshow`，首次运行应通过 HDMI 或 Raspberry Pi Connect 打开图形桌面。
 
 ```bash
 git clone https://github.com/chenljjj/edge-vision.git ~/edge-vision
@@ -83,38 +82,6 @@ python -m src.main \
 
 较旧系统可能使用 `libcamera-hello` 替代 `rpicam-hello`。若 `onnxruntime` 导入提示缺少 `libgomp.so.1`，执行 `sudo apt install -y libgomp1`。
 
-### 无显示器运行
-
-完成上述安装后，可直接通过 SSH 启动。程序不会创建窗口，每 5 秒向标准输出写入当前 FPS、目标数和区域内数量：
-
-```bash
-cd ~/edge-vision
-source .venv/bin/activate
-python -m src.main \
-  --camera-backend picamera2 \
-  --camera-width 640 \
-  --camera-height 480 \
-  --headless \
-  --log-interval 5 \
-  --model models/yolo11n.onnx \
-  --region 120,80,520,420
-```
-
-示例日志：`status fps=4.8 objects=2 in_region=1`。使用 `Ctrl+C` 正常停止。
-
-使用 `systemd` 将其设为开机自启动服务。`edge-vision@.service` 使用实例名作为 Linux 用户名，下面以用户 `clj` 为例：
-
-```bash
-cd ~/edge-vision
-sudo cp deploy/edge-vision@.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now edge-vision@clj
-sudo systemctl status edge-vision@clj
-journalctl -u edge-vision@clj -f
-```
-
-请将 `clj` 替换为实际登录用户名。服务的默认区域和相机分辨率位于 `deploy/edge-vision@.service` 的 `ExecStart` 行。
-
 ## 运行参数
 
 | 参数 | 默认值 | 说明 |
@@ -123,8 +90,6 @@ journalctl -u edge-vision@clj -f
 | `--source` | `0` | OpenCV 后端的视频源：摄像头编号、文件或 RTSP 地址 |
 | `--camera-backend` | `opencv` | `opencv` 或树莓派 CSI 使用的 `picamera2` |
 | `--camera-width` / `--camera-height` | `640` / `480` | Picamera2 输出分辨率 |
-| `--headless` | 关闭 | 禁用窗口绘制，适合 SSH 与服务进程 |
-| `--log-interval` | `5.0` | 无显示器模式的状态日志间隔（秒） |
 | `--confidence` | `0.45` | 置信度阈值 |
 | `--iou` | `0.45` | NMS IoU 阈值 |
 | `--region` | 无 | 统计区域，格式 `x1,y1,x2,y2` |
@@ -144,9 +109,6 @@ scripts/
   export_yolo.py        # 可选：将 YOLO 权重导出为 ONNX
 tests/
   test_geometry.py      # 无硬件依赖的区域判定测试
-  test_main.py          # CLI 无显示器参数和状态日志格式测试
-deploy/
-  edge-vision@.service  # 使用实例名作为 Linux 用户名的 systemd 服务模板
 requirements-*.txt      # 笔记本、树莓派和模型导出的依赖边界
 ```
 
@@ -161,8 +123,7 @@ python -m unittest discover -s tests
 1. `rpicam-hello --list-cameras` 能识别 CSI 摄像头；
 2. 程序窗口连续显示画面与检测框；
 3. 画面左上角有非零 FPS；
-4. 目标中心进入蓝色矩形时，检测框变绿，`in region` 数值变化；
-5. 无显示器模式持续输出 `status fps=... objects=...` 日志。
+4. 目标中心进入蓝色矩形时，检测框变绿，`in region` 数值变化。
 
 ## 自训或替换模型
 
@@ -179,7 +140,7 @@ python scripts/export_yolo.py
 
 | 优先级 | 方向 | 当前限制 | 建议实现 |
 | --- | --- | --- | --- |
-| P0 | 结果分发 | 无显示器模式当前只输出文本日志 | 增加 MQTT、HTTP Webhook 或 RTSP 叠加流，将检测事件接入上层系统 |
+| P0 | 无显示器部署 | 程序依赖 `cv2.imshow`，纯 SSH 无法长期运行 | 增加 `--headless`，通过日志、MQTT、HTTP 或 RTSP 输出结果；使用 `systemd` 托管进程 |
 | P0 | 性能基线 | 未记录不同分辨率、模型和设备下的端到端延迟 | 记录采集、预处理、推理、后处理耗时和内存占用，建立 Pi 5 基线 |
 | P1 | 模型优化 | 默认 FP32 动态 ONNX 模型，CPU 推理压力较高 | 评估固定输入尺寸、416/320 输入、ONNX INT8 校准量化与精度回归 |
 | P1 | 目标跟踪与事件计数 | 当前只统计单帧区域内数量 | 接入 ByteTrack 等跟踪器，增加跨线方向、停留时间和去重累计计数 |

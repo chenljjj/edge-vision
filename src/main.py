@@ -24,19 +24,10 @@ def draw_detection(frame, detection: Detection, in_region: bool) -> None:
     cv2.putText(frame, text, (x1, max(22, y1 - 7)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2, cv2.LINE_AA)
 
 
-def format_status(fps: float, object_count: int, region_count: int | None) -> str:
-    message = f"status fps={fps:.1f} objects={object_count}"
-    if region_count is not None:
-        message += f" in_region={region_count}"
-    return message
-
-
 def run(args: argparse.Namespace) -> None:
     model_path = Path(args.model)
     if not model_path.exists():
         raise FileNotFoundError(f"找不到模型：{model_path}。请先运行 python scripts/export_yolo.py")
-    if args.log_interval <= 0:
-        raise ValueError("--log-interval 必须大于 0")
 
     region = parse_rectangle(args.region)
     detector = YoloOnnxDetector(str(model_path), args.confidence, args.iou)
@@ -45,8 +36,7 @@ def run(args: argparse.Namespace) -> None:
     )
 
     durations: deque[float] = deque(maxlen=30)
-    next_log_at = time.monotonic() + args.log_interval
-    print("headless mode: use Ctrl+C to exit." if args.headless else "按 q 或 Esc 退出。")
+    print("按 q 或 Esc 退出。")
     try:
         while True:
             success, frame = capture.read()
@@ -61,19 +51,12 @@ def run(args: argparse.Namespace) -> None:
             for detection in tracked:
                 in_region = region is not None and point_in_rectangle(detection.center, region)
                 region_count += int(in_region)
-                if not args.headless:
-                    draw_detection(frame, detection, in_region)
-
-            fps = len(durations) / sum(durations) if durations else 0
-            if args.headless:
-                if time.monotonic() >= next_log_at:
-                    print(format_status(fps, len(tracked), region_count if region is not None else None), flush=True)
-                    next_log_at = time.monotonic() + args.log_interval
-                continue
+                draw_detection(frame, detection, in_region)
 
             if region is not None:
                 x1, y1, x2, y2 = region
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 200, 0), 2)
+            fps = len(durations) / sum(durations) if durations else 0
             summary = f"FPS: {fps:.1f} | objects: {len(tracked)}"
             if region is not None:
                 summary += f" | in region: {region_count}"
@@ -83,12 +66,9 @@ def run(args: argparse.Namespace) -> None:
             key = cv2.waitKey(1) & 0xFF
             if key in (ord("q"), 27):
                 break
-    except KeyboardInterrupt:
-        print("stopped", flush=True)
     finally:
         capture.release()
-        if not args.headless:
-            cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -98,8 +78,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--camera-backend", choices=("opencv", "picamera2"), default="opencv")
     parser.add_argument("--camera-width", type=int, default=640)
     parser.add_argument("--camera-height", type=int, default=480)
-    parser.add_argument("--headless", action="store_true", help="禁用 OpenCV 窗口，并将运行状态写入标准输出")
-    parser.add_argument("--log-interval", type=float, default=5.0, help="无显示器模式的状态日志间隔（秒）")
     parser.add_argument("--confidence", type=float, default=0.45)
     parser.add_argument("--iou", type=float, default=0.45)
     parser.add_argument("--region", help="计数区域：x1,y1,x2,y2，例如 120,80,520,420")
