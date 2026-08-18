@@ -10,7 +10,7 @@
 - 指定矩形内的实时目标数量与滑动平均 FPS；
 - 不依赖训练框架的运行端，便于迁移到 ARM 设备。
 
-> 当前区域统计是“区域内实时数量”，不是跨线累计计数。模型文件和虚拟环境不会提交到 Git 仓库。
+> 当前区域统计是“区域内实时数量”，不是跨线累计计数。
 
 ## 技术路线
 
@@ -71,6 +71,20 @@ python -m src.main \
 
 较旧系统可能使用 `libcamera-hello` 替代 `rpicam-hello`。若 `onnxruntime` 导入提示缺少 `libgomp.so.1`，执行 `sudo apt install -y libgomp1`。
 
+## 部署实测
+
+### Raspberry Pi 5 CSI 接线
+
+![Raspberry Pi 5 与 CSI 摄像头实物接线](docs/images/hardware-wiring.jpg)
+
+CSI 摄像头模组通过排线接入 Raspberry Pi 5 的摄像头接口，运行时由 Picamera2/libcamera 采集视频帧。
+
+### 检测运行结果
+
+![树莓派端人车检测与区域统计结果](docs/images/detection-result.png)
+
+实测画面显示检测框、目标类别、置信度、区域内对象数量和实时 FPS；示例中推理 FPS 为 5.7。
+
 ## 运行参数
 
 | 参数 | 默认值 | 说明 |
@@ -124,23 +138,3 @@ python scripts/export_yolo.py
 ```
 
 将导出的文件放入 `models/yolo11n.onnx`，或通过 `--model` 指定其他路径。导出模型必须保留标准 YOLO 检测输出，供现有后处理解析。
-
-## 改进方向
-
-| 优先级 | 方向 | 当前限制 | 建议实现 |
-| --- | --- | --- | --- |
-| P0 | 无显示器部署 | 程序依赖 `cv2.imshow`，纯 SSH 无法长期运行 | 增加 `--headless`，通过日志、MQTT、HTTP 或 RTSP 输出结果；使用 `systemd` 托管进程 |
-| P0 | 性能基线 | 未记录不同分辨率、模型和设备下的端到端延迟 | 记录采集、预处理、推理、后处理耗时和内存占用，建立 Pi 5 基线 |
-| P1 | 模型优化 | 默认 FP32 动态 ONNX 模型，CPU 推理压力较高 | 评估固定输入尺寸、416/320 输入、ONNX INT8 校准量化与精度回归 |
-| P1 | 目标跟踪与事件计数 | 当前只统计单帧区域内数量 | 接入 ByteTrack 等跟踪器，增加跨线方向、停留时间和去重累计计数 |
-| P1 | 配置管理 | 相机、阈值和区域均由命令行传入 | 引入 YAML 配置与设备配置模板，分离开发、测试和生产参数 |
-| P2 | 硬件加速 | 当前只使用 ONNX Runtime CPU 执行器 | 根据硬件评估 Hailo、Coral TPU、Jetson TensorRT 或 RKNN 后端 |
-| P2 | 可观测性 | 只有画面内 FPS，无运行日志或指标 | 增加结构化日志、健康检查、帧丢失率与 Prometheus 指标 |
-| P2 | 自动化验证 | 单元测试仅覆盖几何逻辑 | 增加 ONNX 冒烟测试、样例视频回归测试与 GitHub Actions |
-
-## 常见问题
-
-- PowerShell 无法激活环境：执行 `Set-ExecutionPolicy -Scope Process Bypass`，或直接调用 `.\.venv\Scripts\python.exe`。
-- Windows 移动项目后 `pip` 启动器指向旧路径：删除并重新创建 `.venv`，使用 `python -m pip` 安装依赖。
-- CSI 摄像头不可用：重新检查排线方向，并先通过 `rpicam-hello --list-cameras` 验证系统层。
-- 模型未找到：运行 `python scripts/download_model.py`；模型被 `.gitignore` 排除，克隆仓库后需单独下载。
