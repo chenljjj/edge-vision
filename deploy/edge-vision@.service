@@ -1,0 +1,16 @@
+[Unit]
+Description=Edge Vision inference service for user %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/edge-vision
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/%i/edge-vision/.venv/bin/python -m src.main --camera-backend picamera2 --camera-width 640 --camera-height 480 --headless --log-interval 5 --model models/yolo11n.onnx --region 120,80,520,420
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
