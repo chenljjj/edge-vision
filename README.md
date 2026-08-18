@@ -75,7 +75,7 @@ python -m src.main \
 
 ### Raspberry Pi 5 CSI 接线
 
-![Raspberry Pi 5 与 CSI 摄像头实物接线](docs/images/hardware-wiring.jpg)
+<img src="docs/images/hardware-wiring.jpg" alt="Raspberry Pi 5 与 CSI 摄像头实物接线" width="720">
 
 CSI 摄像头模组通过排线接入 Raspberry Pi 5 的摄像头接口，运行时由 Picamera2/libcamera 采集视频帧。
 
