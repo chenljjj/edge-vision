@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="690" viewBox="0 0 1280 690" role="img" aria-labelledby="title desc">
+  <title id="title">Edge Vision 技术路线</title>
+  <desc id="desc">从 YOLO 模型准备、摄像头采集到 ONNX Runtime 推理和区域统计输出的边缘视觉部署流程。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#476072"/>
+    </marker>
+    <style>
+      .title { font: 700 28px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172a3a; }
+      .section { font: 700 16px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #476072; }
+      .label { font: 600 17px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #172a3a; }
+      .detail { font: 400 14px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #526676; }
+      .note { font: 400 15px "Segoe UI", "Microsoft YaHei", sans-serif; fill: #476072; }
+      .card { stroke-width: 2; }
+      .flow { fill: none; stroke: #476072; stroke-width: 2.5; marker-end: url(#arrow); }
+      .dash { fill: none; stroke: #8a9ba8; stroke-width: 2; stroke-dasharray: 8 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1280" height="690" fill="#ffffff"/>
+  <text x="56" y="58" class="title">Edge Vision 技术路线</text>
+  <text x="56" y="88" class="note">模型标准化 → 多源采集 → 端侧推理 → 检测结果与性能指标</text>
+
+  <rect x="40" y="120" width="1200" height="150" rx="8" fill="#f4f8fa" stroke="#d9e3e8"/>
+  <text x="64" y="151" class="section">1 · 模型准备</text>
+  <rect x="82" y="174" width="260" height="66" rx="6" fill="#ffffff" stroke="#8cb5c7" class="card"/>
+  <text x="212" y="201" text-anchor="middle" class="label">YOLO 权重 / 官方 ONNX</text>
+  <text x="212" y="224" text-anchor="middle" class="detail">训练或下载模型</text>
+  <path d="M342 207 H450" class="flow"/>
+  <rect x="458" y="174" width="260" height="66" rx="6" fill="#e7f4f8" stroke="#5a9db2" class="card"/>
+  <text x="588" y="201" text-anchor="middle" class="label">yolo11n.onnx</text>
+  <text x="588" y="224" text-anchor="middle" class="detail">统一交换格式</text>
+  <path d="M718 207 H826" class="flow"/>
+  <rect x="834" y="174" width="320" height="66" rx="6" fill="#ffffff" stroke="#8cb5c7" class="card"/>
+  <text x="994" y="201" text-anchor="middle" class="label">运行端依赖隔离</text>
+  <text x="994" y="224" text-anchor="middle" class="detail">ONNX Runtime + OpenCV</text>
+
+  <rect x="40" y="300" width="1200" height="210" rx="8" fill="#f8f7f2" stroke="#e2dfd2"/>
+  <text x="64" y="331" class="section">2 · 端侧推理流水线</text>
+  <rect x="70" y="365" width="210" height="94" rx="6" fill="#ffffff" stroke="#c6b878" class="card"/>
+  <text x="175" y="398" text-anchor="middle" class="label">帧采集</text>
+  <text x="175" y="424" text-anchor="middle" class="detail">OpenCV / Picamera2</text>
+  <text x="175" y="445" text-anchor="middle" class="detail">USB / CSI / RTSP</text>
+  <path d="M280 412 H350" class="flow"/>
+  <rect x="358" y="365" width="210" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
+  <text x="463" y="398" text-anchor="middle" class="label">预处理</text>
+  <text x="463" y="424" text-anchor="middle" class="detail">Letterbox · RGB</text>
+  <text x="463" y="445" text-anchor="middle" class="detail">NCHW · 归一化</text>
+  <path d="M568 412 H638" class="flow"/>
+  <rect x="646" y="365" width="210" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
+  <text x="751" y="398" text-anchor="middle" class="label">ONNX Runtime</text>
+  <text x="751" y="424" text-anchor="middle" class="detail">CPU / 可替换执行后端</text>
+  <text x="751" y="445" text-anchor="middle" class="detail">模型前向推理</text>
+  <path d="M856 412 H926" class="flow"/>
+  <rect x="934" y="365" width="250" height="94" rx="6" fill="#fffdf5" stroke="#c6b878" class="card"/>
+  <text x="1059" y="398" text-anchor="middle" class="label">后处理</text>
+  <text x="1059" y="424" text-anchor="middle" class="detail">类别筛选 · 置信度</text>
+  <text x="1059" y="445" text-anchor="middle" class="detail">NMS · 坐标还原</text>
+
+  <path d="M751 459 V492" class="dash"/>
+  <text x="770" y="487" class="detail">模型输入尺寸 / 阈值可调</text>
+
+  <rect x="40" y="540" width="1200" height="110" rx="8" fill="#f3f8f4" stroke="#d7e5d9"/>
+  <text x="64" y="571" class="section">3 · 设备输出</text>
+  <rect x="90" y="589" width="250" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
+  <text x="215" y="616" text-anchor="middle" class="label">检测框与类别</text>
+  <path d="M340 610 H442" class="flow"/>
+  <rect x="450" y="589" width="250" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
+  <text x="575" y="616" text-anchor="middle" class="label">区域内目标数量</text>
+  <path d="M700 610 H802" class="flow"/>
+  <rect x="810" y="589" width="170" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
+  <text x="895" y="616" text-anchor="middle" class="label">FPS</text>
+  <path d="M980 610 H1082" class="flow"/>
+  <rect x="1090" y="589" width="110" height="42" rx="6" fill="#ffffff" stroke="#82b18a" class="card"/>
+  <text x="1145" y="616" text-anchor="middle" class="label">GUI</text>
+</svg>

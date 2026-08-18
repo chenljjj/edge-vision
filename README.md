@@ -14,18 +14,7 @@
 
 ## 技术路线
 
-```text
-YOLO 权重 / 官方 ONNX
-        |
-        v
-ONNX 模型 (yolo11n.onnx)
-        |
-        v
-帧采集 --> Letterbox + RGB + NCHW --> ONNX Runtime --> 类别筛选 + NMS
-  |                                                            |
-  |                                                            v
-OpenCV / Picamera2 <-------------------------- 检测框、区域统计、FPS 显示
-```
+![Edge Vision 技术路线](docs/technical-route.svg)
 
 模型构建与推理解耦：`ultralytics` 只在自训模型导出阶段使用；笔记本与树莓派运行时仅需 ONNX Runtime、OpenCV 和设备侧相机依赖。
 
