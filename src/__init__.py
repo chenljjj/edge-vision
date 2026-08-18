@@ -1,0 +1,1 @@
+"""Edge vision application package."""
